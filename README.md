@@ -4,7 +4,10 @@ Have Teensy and Micropython, will strive to make blinky.
 ### Resources
 
 1. [Micropython.org](https://micropython.org/)
+1. [Micropython Source](https://github.com/micropython/micropython)
 1. [Micropython/Teensy](https://github.com/micropython/micropython/tree/master/teensy)
+1. [GCC-arm-embedded](https://launchpad.net/gcc-arm-embedded)
+1. [catherineh/Getting Started](http://catherineh.github.io/programming/2016/09/18/getting-started-with-micropython-on-the-teensy.html)
 
 ### Acquire ARM Embedded Toolchain
 
@@ -24,6 +27,10 @@ sudo apt-get install gcc-arm-embedded
 1. 1K resistor
 1. Pushbutton
 1. Micro-USB cable
+
+### Install Teensy Rules file
+
+I cheated and already had this installed from way back, but for future reference, I installed the [49-teensy.rules](http://www.pjrc.com/teensy/49-teensy.rules) file in `/etc/udev/rules.d/49-teensy.rules`. This means I don't have to use `sudo` later.
 
 ### Test Teensy 
 
@@ -48,3 +55,59 @@ Then I clicked 'Upload' which compiled, started another little program window fr
 
 Now I know that everything broken from here on out is probably my fault, not the Teensy's.
 
+### Install Micropython
+
+I cloned the [Micropython repo](https://github.com/micropython/) into ~/tools, where I usually put things like this. I followed the instructions on the [Micropython Teensy page](https://github.com/micropython/micropython/tree/master/teensy), adapting them for my file system.
+
+My arduino install is in ~/tools/arduino-1.6.12.
+
+```
+cd ~/tools/micropython/teensy
+sudo ARDUINO=~/tools/arduino-1.6.12/ make deploy
+```
+
+The first time, I didn't have the Teensy actually attached to my computer, so I got this message:
+
+```
+Preparing post_compile for upload
+REBOOT
+Teensy did not respond to a USB-based request to automatically reboot.
+Please press the PROGRAM MODE BUTTON on your Teensy to upload your sketch.
+```
+
+Oops. I connected the Teensy and ran the command again.
+
+```
+ARDUINO=~/tools/arduino-1.6.12 make deploy
+```
+
+Worked great. 
+
+My Teensy is now the proud bearer of Python development environment accesible over serial.
+
+### Serial to the Teensy
+
+I used minicom because I had it, but will probably move to screen in the future. It's been forever since I used screen. Anyway, I ran this command and hit enter a couple of times.
+
+```
+minicom -D /dev/ttyACM0
+```
+
+Success! That there is a Python prompt!
+
+```
+Welcome to minicom 2.7
+
+OPTIONS: I18n 
+Compiled on Jan  1 2014, 17:13:19.
+Port /dev/ttyACM0, 14:42:50
+
+Press CTRL-A Z for help on special keys
+
+
+>>> 
+```
+
+### Wait, Python 3.4?
+
+Uh, okay. I should probably go read up on using micropython...
