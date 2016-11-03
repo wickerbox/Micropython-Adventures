@@ -7,5 +7,3 @@ Have common boards and Micropython, will strive to make blinky.
 - [Adafruit ESP8266 Huzzah](blob/master/huzzah/README.md) (SOC + WiFi)
 - [Sparkfun ESP8266 Thing](blob/master/thing/README.md) (SOC + WiFi)
 
- Getting to blinky with Micropython on Adafruit Huzzah, Sparkfun Thing, and PJRC Teensy. — 
-
