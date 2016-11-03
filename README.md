@@ -110,4 +110,18 @@ Press CTRL-A Z for help on special keys
 
 ### Wait, Python 3.4?
 
-Uh, okay. I should probably go read up on using micropython...
+Uh, okay. Let's start with [reading up on using the language](http://docs.micropython.org/en/latest/wipy/library/index.html)...
+
+Turns out the Python environment is really called a Micropython Serial REPL, a read, eval, print loop. The tutorials at Micropython are helpful, but definitely figuring stuff out took some trial and error.
+
+The LED is hardwired... had to treat the LED pin like a standard output pin.
+
+```
+from pyb import Pin
+from pyb import time
+
+led = Pin('D3', Pin.OUT_PP)
+led.high()
+led.low()
+```
+
