@@ -64,7 +64,7 @@ My arduino install is in ~/tools/arduino-1.6.12.
 
 ```
 cd ~/tools/micropython/teensy
-sudo ARDUINO=~/tools/arduino-1.6.12/ make deploy
+ARDUINO=~/tools/arduino-1.6.12/ make deploy
 ```
 
 The first time, I didn't have the Teensy actually attached to my computer, so I got this message:
@@ -115,7 +115,17 @@ Uh, okay. Let's start with [reading up on using the language](http://docs.microp
 
 Turns out the Python environment is really called a Micropython Serial REPL, a read, eval, print loop. The tutorials at Micropython are helpful, but definitely figuring stuff out took some trial and error.
 
-The LED is hardwired... had to treat the LED pin like a standard output pin.
+The LED is hardwired... the onboard orange LED can be toggled:
+
+```
+from pyb import LED
+led = LED(1)
+led.on()
+led.off()
+led.toggle()
+```
+
+I wanted to treat the LED pin like a standard output pin.
 
 ```
 from pyb import Pin
@@ -124,4 +134,67 @@ led = Pin('D3', Pin.OUT_PP)
 led.high()
 led.low()
 ```
+
+### Create and upload Python script 
+
+I want to set up a simple toggling LED script to prove this works, so I logged into the REPL like I did before and tested the script parts to make sure it all works.
+
+```
+from pyb import LED
+from pyb import delay                                                       
+led = LED(1)
+while (True):                                                              
+    led.toggle()                                                            
+    delay(1000)                                                             
+```
+
+I used [Catherine's instructions](http://catherineh.github.io/programming/2016/09/18/getting-started-with-micropython-on-the-teensy.html), which said:
+
+```
+MicroPython looks for two scripts - boot.py that will execute once on boot (like the setup section of an arduino sketch) and - main.py that executes after boot (like the loop section of an arduino sketch, except that it will not run continously unless you have a while True: loop).
+```
+
+I want this code in the loop so I created a new directory called ~/tools/micropython/teensy/scripts and saved these steps in a file called toggle-led.py. Then, from the ~/tools/micropython/teensy directory, I ran the same command as earlier to make and deploy the code.
+
+```
+cd ~/tools/micropython/teensy
+ARDUINO=~/tools/arduino-1.6.12 make deploy
+```
+
+That didn't work, so I added the extra step from Catherine's instructions to add the files to the memzip_files folder:
+
+```
+cd ~/tools/micropython/teensy
+cp scripts/* memzip_files
+ARDUINO=~/tools/arduino-1.6.12 make deploy
+```
+
+The LEDs didn't toggle... :(
+
+Oh! I opened up  memzip_files and found two files: `boot.py` and `main.py` and I realized it's only running `main.py` in the loop, so I'd have to call what's in toggle_led.py with a function. Not sure how I thought it was working, but anyway...
+
+I added the code to toggle the LED to the end of main.py and it works!
+
+```
+wicker@surface:~/tools/micropython/teensy (master)$ ARDUINO=~/tools/arduino-1.6.12/ make deploy
+Use make V=1 or set BUILD_VERBOSE in your environment to increase build verbosity.
+Using toolchain from PATH
+Generating build/frozen.c
+Generating build/genhdr/mpversion.h
+GEN build/genhdr/qstr.i.last
+GEN build/genhdr/qstr.split
+GEN build/genhdr/qstrdefs.collected.h
+QSTR not updated
+CC ../py/modsys.c
+CC ../py/../extmod/modwebrepl.c
+CC build/frozen.c
+CC ../lib/utils/pyexec.c
+LINK build/micropython.elf
+   text    data     bss     dec     hex filename
+ 188440    1236   20388  210064   33490 build/micropython.elf
+HEX build/micropython.elf
+Preparing post_compile for upload
+REBOOT
+```
+
 
