@@ -9,16 +9,6 @@ Have Huzzah and Micropython, will strive to make blinky.
 1. [GCC-arm-embedded](https://launchpad.net/gcc-arm-embedded)
 1. [Micropython Official ESP8266 Howto](http://docs.micropython.org/en/latest/esp8266/esp8266/tutorial/intro.html#deploying-the-firmware)
 
-### Acquire ARM Embedded Toolchain
-
-I'm using Linux Mint 17 on a Surface Pro 3 because I enjoy pain and suffering.
-
-```
-sudo add-apt-repository ppa:team-gcc-arm-embedded/ppa
-sudo apt-get update
-sudo apt-get install gcc-arm-embedded
-```
-
 ### Acquire Parts
 
 1. ESP8266 Huzzah
