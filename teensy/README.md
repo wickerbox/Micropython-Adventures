@@ -119,7 +119,6 @@ The LED is hardwired... had to treat the LED pin like a standard output pin.
 
 ```
 from pyb import Pin
-from pyb import time
 
 led = Pin('D3', Pin.OUT_PP)
 led.high()
