@@ -93,3 +93,343 @@ Success! Unlike the Teensy, the standard ESP8266 just uses pin numbers with no '
 >>> p0.low()
 ```
 
+### Using ampy to load a blinky script
+
+The [Adafruit MicroPython Tool](https://github.com/adafruit/ampy) has installation instructions.
+
+I installed it with
+
+```
+sudo pip install adafruit-ampy
+```
+
+At this point, I'm really fuzzy about file structures. Not only what I have access to on the remote board, but what I should have for which tool here on my laptop. So, using Ampy, I ran `ampy --help` to see what my options were.
+
+```
+wicker@surface:~$ ampy --help
+Usage: ampy [OPTIONS] COMMAND [ARGS]...
+
+  ampy - Adafruit MicroPython Tool
+
+  Ampy is a tool to control MicroPython boards over a serial connection.
+  Using ampy you can manipulate files on the board's internal filesystem and
+  even run scripts.
+
+Options:
+  -p, --port PORT  Name of serial port for connected board.  Can optionally
+                   specify with AMPY_PORT environemnt variable.  [required]
+  -b, --baud BAUD  Baud rate for the serial connection (default 115200).  Can
+                   optionally specify with AMPY_BAUD environment variable.
+  --version        Show the version and exit.
+  --help           Show this message and exit.
+
+Commands:
+  get    Retrieve a file from the board.
+  ls     List contents of a directory on the board.
+  mkdir  Create a directory on the board.
+  put    Put a file on the board.
+  reset  Perform soft reset/reboot of the board.
+  rm     Remove a file from the board.
+  run    Run a script and print its output.
+```
+
+Okay, so what's currently on the board. Should there be a boot.py and a main.py, like in the Teensy?
+
+```
+wicker@surface:~$ ampy -p /dev/ttyUSB0 ls
+boot.py
+```
+
+Let's get that file and see what's in it... but first, let's move into the working directory for this project on my computer.
+
+```
+wicker@surface:~$ cd proj/Micropython-Adventures/huzzah/ 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 get boot.py# This file is executed on every boot (including wake-boot from deepsleep)
+#import esp
+#esp.osdebug(None)
+import gc
+import webrepl
+webrepl.start()
+gc.collect()
+```
+
+Doesn't look like we copied it, just that we read it so I can copy it down if I wanted to. Did we copy it locally?
+
+```
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ls
+README.md  toggle-led.py
+```
+
+I decided to try and run my blinky script locally, using `run` and it worked, but it didn't get added to the Huzzah or anything.
+
+```
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 run toggle-led.py 
+```
+
+Let's try putting it on the board, but first, let's try adding time and delay to it. I went back in to the REPL to test out a delay script.
+
+```
+minicom -D /dev/ttyUSB0
+```
+
+I'm not able to import pyb, but I was able to import time. I added a sleep to my existing toggle-led script, but I'm cheating by using a Pin instead of an LED object.
+
+```
+from machine import Pin
+from time import sleep
+p0 = Pin(14, Pin.OUT)
+p0.high()
+sleep(1)
+p0.low()
+sleep(1)
+p0.high()
+sleep(1)
+p0.low()
+sleep(1)
+```
+
+This works on the REPL and it should slowly blink the LED twice when run on the board. I ran it using the same `run` command:
+
+```
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 run toggle-led.py
+```
+
+But I really want to upload the file and run it whenever I hit the reset button.
+
+First, I uploaded toggle-led.py to the board. Success!
+
+```
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 put toggle-led.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 ls
+boot.py
+toggle-led.py
+```
+
+But it doesn't yet run on startup, because `boot.py` has no idea `toogle-led.py` exists. I copied the contents of the `boot.py` on the board to my computer's local folder.
+
+```
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 get boot.py > boot.py
+```
+
+Then I removed the toggle-led file from the board with `rm` and tested the asterisk for uploading using `put`.
+
+
+```
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 ls
+boot.py
+toggle-led.py
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 rm toggle-led.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 ls
+boot.py
+```
+
+It's gone, now I'm going to try to put all \*.py on the board. Boot.py still doesn't know about toggle-led.py. I'm trying not to make any assumptions about how this works.
+
+```
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 put *.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 ls
+boot.py
+toggle-led.py
+```
+
+Success!
+
+Now, to link boot.py to toggle-led.py.
+
+First, I adjusted toggle-led.py to contain a function:
+
+```
+from machine import Pin
+from time import sleep
+
+def toggleled():
+  p0 = Pin(14, Pin.OUT)
+  p0.high()
+  sleep(1)
+  p0.low()
+  sleep(1)
+  p0.high()
+  sleep(1)
+  p0.low()
+  sleep(1)
+```
+
+Then I edited the boot.py to import toggle-led and realized that, of course, this needs to be rnamed toggleled instead of toggle-led, since Python doesn't like dashes in module names...
+
+```
+# This file is executed on every boot (including wake-boot from deepsleep)
+#import esp
+#esp.osdebug(None)
+import gc
+import webrepl
+import toggleled
+
+webrepl.start()
+toggleled()
+gc.collect()
+```
+
+And now, to remove the old toggle-led.py, put both files on the board, and see if it works.
+
+```
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ls
+boot.py  README.md  toggleled.py
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 ls
+boot.py
+toggle-led.py
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 rm toggle-led.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 put *.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 reset
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 ls
+boot.py
+toggleled.py
+```
+
+That totally didn't work. Have I forgotten how to call modules in Python? Shoot, let's just throw this in boot.py directly.
+
+```
+# This file is executed on every boot (including wake-boot from deepsleep)
+#import esp
+#esp.osdebug(None)
+import gc
+import webrepl
+from machine import Pin
+from time import sleep
+
+p0 = Pin(14, Pin.OUT)
+p0.high()
+sleep(1)
+p0.low()
+sleep(1)
+p0.high()
+sleep(1)
+p0.low()
+sleep(1)
+
+webrepl.start()
+gc.collect()
+```
+
+Putting that on the board didn't work either... wait... what's ON the boot.py right now? 
+
+```
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 get boot.py 
+# This file is executed on every boot (including wake-boot from deepsleep)
+#import esp
+#esp.osdebug(None)
+import gc
+import webrepl
+webrepl.start()
+gc.collect()
+```
+
+Wait a minute... What?! We're not affecting boot.py? Do we have not have overwrite capability?
+
+I removed the two .py files, verified they were gone, added the new edited boot.py by itself, and ran it. And it worked!
+
+```
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 rm toggleled.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 rm boot.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 ls 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 put boot.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 ls 
+boot.py
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 get boot.py 
+# This file is executed on every boot (including wake-boot from deepsleep)
+#import esp
+#esp.osdebug(None)
+import gc
+import webrepl
+from machine import Pin
+from time import sleep
+
+p0 = Pin(14, Pin.OUT)
+p0.high()
+sleep(1)
+p0.low()
+sleep(1)
+p0.high()
+sleep(1)
+p0.low()
+sleep(1)
+
+webrepl.start()
+gc.collect()
+```
+
+Okay, I made one edit and tried to put boot.py but it apparently can't overwrite. I also played around with adding multiple files at one time. Basically, it looks like you have to put each file individually, and remove each file before putting a new one. But that's okay.
+
+... after some more messing around with it: success!
+
+Boot.py looks like this:
+
+```
+# This file is executed on every boot (including wake-boot from deepsleep)
+#import esp
+#esp.osdebug(None)
+import gc
+import webrepl
+import toggleled
+
+toggleled.toggleled()
+
+webrepl.start()
+gc.collect()
+```
+
+Toggleled..py looks like this:
+
+```
+from machine import Pin
+from time import sleep
+
+def toggleled():
+  p0 = Pin(14, Pin.OUT)
+  p0.high()
+  sleep(1)
+  p0.low()
+  sleep(1)
+  p0.high()
+  sleep(1)
+  p0.low()
+  sleep(1)
+```
+
+I remove everything from the board, upload each file individually, and hit the physical reset button on the board, then the light blinks twice as the script runs successfully.
+
+```
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 ls
+toggleled.py
+boot.py
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 rm toggleled.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 rm boot.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 ls
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 put toggleled.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 put boot.py 
+
+wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUSB0 ls
+toggleled.py
+boot.py
+```
+
+
