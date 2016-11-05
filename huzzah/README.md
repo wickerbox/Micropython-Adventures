@@ -17,7 +17,7 @@ Have Huzzah and Micropython, will strive to make blinky.
 1. 1K resistor
 1. Pushbutton
 1. Micro-USB cable
-
+i
 ### Acquire Micropython ESPtool
 
 ```
@@ -431,5 +431,51 @@ wicker@surface:~/proj/Micropython-Adventures/huzzah (master)$ ampy -p /dev/ttyUS
 toggleled.py
 boot.py
 ```
+
+### Talking to Accelerometer over I2C
+
+Using the MMA7660 3-axis accelerometer.
+
+I'll need to: 
+
+- collect and hold the x, y, z info in an accelerometer object in the ESP8266
+- talk I2C to the accelerometer from the ESP8266
+
+I opened and kept open the [Quick Ref guide for the ESP8266 Micropython libraries](http://docs.micropython.org/en/latest/esp8266/esp8266/quickref.html), along with the [MicroPython ESP8266](http://docs.micropython.org/en/latest/esp8266/esp8266/tutorial/index.html) tutorial.  
+
+I know from a previous project that the MMA7660 default address is 0x4C. Also:
+
+|Variable|Address|
+|--------|-------|
+|MMA7660_ADDR  |0x4c|
+|MMA7660_X     |0x00|
+|MMA7660_Y     |0x01|
+|MMA7660_Z     |0x02|
+|MMA7660_TILT  |0x03|
+|MMA7660_SRST  |0x04|
+|MMA7660_SPCNT |0x05|
+|MMA7660_INTSU |0x06|
+|MMA7660_MODE  |0x07|
+|MMA7660_SR    |0x08|
+|MMA7660_PDET  |0x09|
+|MMA7660_PD    |0x0A|
+
+What do I need to talk I2C to this accelerometer? There's an I2C in `machine`.
+
+from machine import Pin, I2C
+
+# construct an I2C bus
+i2c = I2C(scl=Pin(5), sda=Pin(4), freq=100000)
+
+i2c.readfrom(0x4c, 4)   # read 4 bytes from slave device with address 0x3a
+i2c.writeto(0x4c, '12') # write '12' to slave device with address 0x3a
+
+buf = bytearray(10)     # create a buffer with 10 bytes
+i2c.writeto(0x3a, buf)  # write the given buffer to the slave
+```
+
+```
+
+Next, is I2C (the serial protocol to talk to the accelerometer chip) already supported automatically? How do I call it? 
 
 

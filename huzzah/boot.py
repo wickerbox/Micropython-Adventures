@@ -6,6 +6,7 @@ import webrepl
 import toggleled
 
 toggleled.toggleled()
+toggleled.talktoaccel()
 
 webrepl.start()
 gc.collect()
