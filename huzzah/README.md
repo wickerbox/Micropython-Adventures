@@ -440,6 +440,26 @@ toggleled.py
 boot.py
 ```
 
+### Add SD Card
+
+Grab the Python module (sdcard.py) and `put` it onto the board. I wired up the pins on my SD card breakout following the [Adafruit instructions](https://learn.adafruit.com/micropython-hardware-sd-cards/esp8266).
+
+Running `os.listdir()` in the REPL will print the files.
+
+Files can be created with 
+
+```
+f = open('temp.txt','w')
+f.write('Test!')
+f.close()
+```
+
+Running `os.listdir()` again will display the new file.
+
+### Serve a Webpage
+
+
+
 ### Talking to Accelerometer over I2C
 
 Using the MMA7660 3-axis accelerometer.

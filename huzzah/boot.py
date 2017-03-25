@@ -4,11 +4,13 @@
 import gc
 import webrepl
 import toggleled
+import machine, sdcard, os
 
 toggleled.toggleled()
-toggleled.talktoaccel()
 
 webrepl.start()
 gc.collect()
 
-
+sd = sdcard.SDCard(machine.SPI(1), machine.Pin(15))
+os.umount()
+vfs = os.VfsFat(sd, "")
