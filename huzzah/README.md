@@ -99,6 +99,8 @@ Success! Unlike the Teensy, the standard ESP8266 just uses pin numbers with no '
 >>> p0.high()
 ```
 
+To exit Minicom, use `Ctrl+A X` and hit 'Yes'.
+
 ### Using ampy to load a blinky script
 
 The [Adafruit MicroPython Tool](https://github.com/adafruit/ampy) has installation instructions.
@@ -254,7 +256,7 @@ from machine import Pin
 from time import sleep
 
 def toggleled():
-  p0 = Pin(14, Pin.OUT)
+  p0 = Pin(0, Pin.OUT)
   p0.high()
   sleep(1)
   p0.low()
