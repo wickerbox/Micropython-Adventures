@@ -64,10 +64,14 @@ Leaving...
 I opened a serial connection to the board using Minicom.
 
 ```
-minicom -D /dev/ttyUSB0
+minicom -D /dev/ttyUSB0 -s
 ```
 
-I tried to hit enter a couple of times, but nothing happened, so I hit 'reset' on the board and that did the trick. I got some garbage in Minicom and then the REPL terminal.
+The -s is to enter setup, where I selected Serial Port Setup and made sure both Hardware and Software Flow Control were set to No. Otherwise, I found I couldn't enter any characters with my keyboard.
+
+I saved that to my profile and selected Exit.
+
+In the console, nothing happened. I tried to hit enter a couple of times, but no luck, so I hit 'reset' on the board and that did the trick. I got some garbage in Minicom and then the REPL terminal.
 
 ```
 �ll`�ll��l�#4 ets_task(40100384, 3, 3fff6300, 4)
@@ -84,13 +88,15 @@ Type "help()" for more information.
 
 ### Blink an LED
 
+The onboard LED is pin 0 and it's an active low pin.
+
 Success! Unlike the Teensy, the standard ESP8266 just uses pin numbers with no 'D' or 'A' prefixes.
 
 ```
 >>> from machine import Pin
->>> p0 = Pin(14, Pin.OUT)
->>> p0.high()
+>>> p0 = Pin(0, Pin.OUT)
 >>> p0.low()
+>>> p0.high()
 ```
 
 ### Using ampy to load a blinky script
