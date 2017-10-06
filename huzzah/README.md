@@ -458,6 +458,8 @@ Running `os.listdir()` again will display the new file.
 
 ### Serve a Webpage
 
+The ESP8266 configures itself automatically as an access point with the form `MicroPython-xxxxxx` and a password of `micropythoN`. If you set your phone or laptop to connect to that access point, you can find the webpage at `192.168.4.1:80`.
+
 
 
 ### Talking to Accelerometer over I2C

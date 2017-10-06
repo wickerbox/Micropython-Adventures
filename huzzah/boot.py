@@ -3,7 +3,7 @@
 #esp.osdebug(None)
 import gc
 import webrepl
-import toggleled
+import toggleled, logging
 import machine, sdcard, os
 
 toggleled.toggleled()
